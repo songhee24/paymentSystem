@@ -1,5 +1,5 @@
 # paymentSystem
-Post http://localhost:8080/confirm
+Post  http://localhost:8080/confirm
 {
     "accountFrom": {
         "id": 12
