@@ -69,3 +69,18 @@ response
 }
 
 
+
+
+UPD
+
+
+
+
+replace entity "Confirm" to model "Confirm"
+
+add method getByDate 
+
+
+GET : http://localhost:8080/payments/GetDatesByMonth?date=2020-04&accountFromId=4&accountToId=4
+
+
