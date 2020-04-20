@@ -1,18 +1,19 @@
 package com.paymentsystem.demo.services.impls;
 
 
+import com.paymentsystem.demo.ConfirmationModel;
 import com.paymentsystem.demo.enttities.Account;
 import com.paymentsystem.demo.enttities.Payment;
 import com.paymentsystem.demo.enums.Status;
 import com.paymentsystem.demo.repos.PaymentRepo;
 import com.paymentsystem.demo.services.AccountService;
-import com.paymentsystem.demo.services.ConfirmationService;
 import com.paymentsystem.demo.services.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -20,8 +21,9 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentRepo paymentRepo;
     @Autowired
     private AccountService accountService;
-    @Autowired
-    private ConfirmationService confirmationService;
+
+    private Random random = new Random();
+
 
     @Override
     public Payment getById(Long id) {
@@ -39,38 +41,43 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentRepo.save(item);
     }
 
+
+
     @Override
     public Payment createPayment(Payment payment) {
-        payment.setStatus(payment.getAmount().intValue()%2 == 0 ? Status.SUCCESS : Status.FAILED);
-        if (payment.getStatus().equals(Status.SUCCESS)) {
-            payment.setStatus(Status.AWAIT);
-            Account confirm = accountService.getById(payment.getAccountFrom().getId());
-            //waiting confirm
-            int code  = confirmationService.getConfirmationCode(confirm.getId());
-            if (code == payment.getConfirmationCode()){
-                //Get money from
-                payment.setStatus(Status.SUCCESS);
-                Account from = accountService.getById(payment.getAccountFrom().getId());
-                from.setBalance(from.getBalance().subtract(payment.getAmount()));
-                Account to = accountService.getById(payment.getAccountTo().getId());
-                to.setBalance(to.getBalance().add(payment.getAmount()));
-                accountService.save(from);
-                accountService.save(to);
-                payment.setAccountFrom(from);
-                payment.setAccountTo(to);
-                //Put money to
-            } else {
-                payment.setStatus(Status.FAILED);
-                return save(payment);
-            }
+        payment.setStatus(Status.AWAITING_CONFIRMATION);
 
-        }
+        int confirmationCode = random.nextInt(9999 - 1000 + 1) + 1000;
+        payment.setConfirmationCode(""+confirmationCode);
+
         return save(payment);
     }
+    int count = 0;
+    @Override
+    public Payment confirmPayment(ConfirmationModel confirmationModel) {
+        Payment payment = getById(confirmationModel.getPaymentId());
 
+        if (!payment.getConfirmationCode().equals(confirmationModel.getConfirmationCode())){
+            payment.setAttempt(++count);
+            System.out.println("1 "+payment.getAttempt());
+            if (payment.getAttempt() == 3){
+                payment.setStatus(Status.BLOCKED);
+                save(payment);
+                System.out.println("2 "+payment.getAttempt());
+                return null;
+            }
+            System.out.println("3 "+payment.getAttempt());
+            return null;
+        }
+        else {
+            payment.setAttempt(0);
+            System.out.println("4 "+payment.getAttempt());
+        }
+        processPayment(payment);
+        return payment;
+    }
 
-/*    @Override
-    public Payment createPayment(Payment payment) {
+    private void processPayment(Payment payment){
         payment.setStatus(payment.getAmount().intValue()%2 == 0 ? Status.SUCCESS : Status.FAILED);
         if (payment.getStatus().equals(Status.SUCCESS)) {
             //Get money from
@@ -84,9 +91,13 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setAccountTo(to);
             //Put money to
         }
-        return save(payment);
-    }*/
+        save(payment);
+    }
 
+    @Override
+    public List<Payment> getDateByMonth(String date, Long accountFromId ) {
+        return paymentRepo.getDateByMonth(date, accountFromId );
+    }
 
     @Override
     public List<Payment> getByStatus(Status status) {

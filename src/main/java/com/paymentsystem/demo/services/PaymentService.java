@@ -1,7 +1,7 @@
 package com.paymentsystem.demo.services;
 
 
-
+import com.paymentsystem.demo.ConfirmationModel;
 import com.paymentsystem.demo.enttities.Payment;
 import com.paymentsystem.demo.enums.Status;
 
@@ -15,6 +15,10 @@ public interface PaymentService extends BaseService<Payment> {
     List<Payment> getByClientId(Long clientId);
 
     List<Payment> getByClientIdNative(Long clientId);
+
+    Payment confirmPayment(ConfirmationModel confirmationModel);
+
+    List<Payment> getDateByMonth(String date, Long accountFromId);
 
 
 }

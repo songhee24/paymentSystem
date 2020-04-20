@@ -1,11 +1,14 @@
 package com.paymentsystem.demo.controllers;
 
+
 import com.paymentsystem.demo.enttities.Payment;
 import com.paymentsystem.demo.enums.Status;
 import com.paymentsystem.demo.services.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 @RestController
@@ -13,6 +16,7 @@ import java.util.List;
 public class PaymentController {
     @Autowired
     private PaymentService paymentService;
+
 
     @GetMapping
     public List<Payment> getAll() {
@@ -42,6 +46,16 @@ public class PaymentController {
     @GetMapping("/getByClientIdNative/{clientId}")
     public List<Payment> getByClientIdNative(@PathVariable("clientId") Long clientId) {
         return paymentService.getByClientIdNative(clientId);
+    }
+
+
+    @GetMapping("/GetDatesByMonth")
+    @ResponseBody
+    public List<Payment> getDate(@RequestParam String date,@RequestParam Long accountFromId ) throws ParseException {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("YYYY-MM");
+        simpleDateFormat.parse(date);
+        System.out.println(date);
+        return paymentService.getDateByMonth(date,accountFromId );
     }
 
 }
